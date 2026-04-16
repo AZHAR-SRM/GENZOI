@@ -1,1 +1,4 @@
 project_id = "gjbzavfdbjdvhocymrzo"
+
+[functions.analyze-paper]
+verify_jwt = false
