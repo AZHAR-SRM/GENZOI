@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      episodes: {
+        Row: {
+          audio_url: string | null
+          chapters: Json
+          client_id: string
+          created_at: string
+          episode_title: string
+          id: string
+          key_takeaways: Json
+          paper_title: string
+          script: Json
+          summary: string
+        }
+        Insert: {
+          audio_url?: string | null
+          chapters?: Json
+          client_id: string
+          created_at?: string
+          episode_title: string
+          id?: string
+          key_takeaways?: Json
+          paper_title: string
+          script?: Json
+          summary?: string
+        }
+        Update: {
+          audio_url?: string | null
+          chapters?: Json
+          client_id?: string
+          created_at?: string
+          episode_title?: string
+          id?: string
+          key_takeaways?: Json
+          paper_title?: string
+          script?: Json
+          summary?: string
+        }
+        Relationships: []
+      }
+      zoi_messages: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
