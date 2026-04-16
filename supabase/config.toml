@@ -2,3 +2,6 @@ project_id = "gjbzavfdbjdvhocymrzo"
 
 [functions.analyze-paper]
 verify_jwt = false
+
+[functions.zoi-chat]
+verify_jwt = false

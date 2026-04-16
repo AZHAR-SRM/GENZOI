@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import ZoiChat from "@/components/ZoiChat";
 
 import appCss from "../styles.css?url";
 
@@ -62,6 +63,7 @@ function RootComponent() {
   return (
     <>
       <Outlet />
+      <ZoiChat />
       <Toaster position="bottom-right" theme="dark" />
     </>
   );
