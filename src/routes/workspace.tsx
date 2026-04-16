@@ -84,8 +84,8 @@ function Workspace() {
 
       setIsGenerating(false);
       setCurrentEpisode(episode);
-      addEpisode(episode);
-      toast.success("Episode generated!");
+      await addEpisode(episode);
+      toast.success("Episode saved & generated!");
       setTimeout(() => navigate({ to: "/episode/$id", params: { id: episode.id } }), 400);
     } catch (e) {
       console.error(e);

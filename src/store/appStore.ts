@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { supabase } from "@/integrations/supabase/client";
+import { getClientId } from "@/lib/clientId";
 
 export interface Chapter {
   title: string;
@@ -40,10 +42,12 @@ interface AppState {
   pipelineSteps: PipelineStep[];
   isGenerating: boolean;
   currentTime: number;
+  hydratedFromDb: boolean;
 
   setCurrentEpisode: (episode: Episode | null) => void;
-  addEpisode: (episode: Episode) => void;
-  removeEpisode: (id: string) => void;
+  addEpisode: (episode: Episode) => Promise<void>;
+  removeEpisode: (id: string) => Promise<void>;
+  loadEpisodesFromDb: () => Promise<void>;
   updatePipelineStep: (id: string, updates: Partial<PipelineStep>) => void;
   setIsGenerating: (v: boolean) => void;
   setCurrentTime: (t: number) => void;
@@ -59,25 +63,92 @@ const defaultPipeline: PipelineStep[] = [
   { id: "audio", label: "Build Audio", status: "pending", progress: 0 },
 ];
 
+function rowToEpisode(r: any): Episode {
+  return {
+    id: r.id,
+    paperTitle: r.paper_title,
+    episodeTitle: r.episode_title,
+    summary: r.summary ?? "",
+    keyTakeaways: (r.key_takeaways ?? []) as string[],
+    chapters: (r.chapters ?? []) as Chapter[],
+    script: (r.script ?? []) as ScriptLine[],
+    audioUrl: r.audio_url ?? undefined,
+    createdAt: r.created_at,
+  };
+}
+
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       currentEpisode: null,
       episodes: [],
       pipelineSteps: [...defaultPipeline],
       isGenerating: false,
       currentTime: 0,
+      hydratedFromDb: false,
 
       setCurrentEpisode: (episode) => set({ currentEpisode: episode }),
-      addEpisode: (episode) =>
+
+      addEpisode: async (episode) => {
+        // optimistic local update
         set((state) => ({
           episodes: [episode, ...state.episodes.filter((e) => e.id !== episode.id)],
-        })),
-      removeEpisode: (id) =>
+        }));
+        // backup to db
+        try {
+          const client_id = getClientId();
+          await supabase.from("episodes").insert({
+            id: episode.id,
+            client_id,
+            paper_title: episode.paperTitle,
+            episode_title: episode.episodeTitle,
+            summary: episode.summary,
+            key_takeaways: episode.keyTakeaways as any,
+            chapters: episode.chapters as any,
+            script: episode.script as any,
+            audio_url: episode.audioUrl ?? null,
+          });
+        } catch (e) {
+          console.error("Failed to back up episode", e);
+        }
+      },
+
+      removeEpisode: async (id) => {
         set((state) => ({
           episodes: state.episodes.filter((e) => e.id !== id),
           currentEpisode: state.currentEpisode?.id === id ? null : state.currentEpisode,
-        })),
+        }));
+        try {
+          const client_id = getClientId();
+          await supabase.from("episodes").delete().eq("id", id).eq("client_id", client_id);
+        } catch (e) {
+          console.error("Failed to delete episode from db", e);
+        }
+      },
+
+      loadEpisodesFromDb: async () => {
+        if (get().hydratedFromDb) return;
+        try {
+          const client_id = getClientId();
+          const { data, error } = await supabase
+            .from("episodes")
+            .select("*")
+            .eq("client_id", client_id)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          const remote = (data ?? []).map(rowToEpisode);
+          // merge: remote is source of truth, keep any unsynced local episodes too
+          const localOnly = get().episodes.filter((e) => !remote.find((r) => r.id === e.id));
+          set({
+            episodes: [...remote, ...localOnly],
+            hydratedFromDb: true,
+          });
+        } catch (e) {
+          console.error("Failed to load episodes", e);
+          set({ hydratedFromDb: true });
+        }
+      },
+
       updatePipelineStep: (id, updates) =>
         set((state) => ({
           pipelineSteps: state.pipelineSteps.map((s) =>
