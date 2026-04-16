@@ -37,6 +37,13 @@ export const Route = createRootRoute({
       { name: "description", content: "Turn research papers into engaging AI-generated podcast episodes with distinct voices and synced transcripts." },
       { name: "author", content: "GENZOI" },
       { name: "twitter:card", content: "summary" },
+      { property: "og:title", content: "GENZOI — AI Research Podcasts" },
+      { name: "twitter:title", content: "GENZOI — AI Research Podcasts" },
+      { property: "og:description", content: "Turn research papers into engaging AI-generated podcast episodes with distinct voices and synced transcripts." },
+      { name: "twitter:description", content: "Turn research papers into engaging AI-generated podcast episodes with distinct voices and synced transcripts." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b08f5286-9fa9-483f-b772-ebc28ab21749" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b08f5286-9fa9-483f-b772-ebc28ab21749" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
